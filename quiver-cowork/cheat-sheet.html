@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Job Search with Claude Cowork — Daily Cheat Sheet</title>
+<style>
+  @page { size: Letter; margin: 0.3in 0.35in; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #1a1a1a;
+    margin: 0;
+    line-height: 1.25;
+    font-size: 8pt;
+  }
+  .header {
+    border-bottom: 2px solid #2c3e50;
+    padding-bottom: 3px;
+    margin-bottom: 5px;
+  }
+  .header h1 {
+    margin: 0 0 1px 0;
+    font-size: 13pt;
+    color: #2c3e50;
+    letter-spacing: -0.5px;
+  }
+  .header .subtitle {
+    color: #666;
+    font-size: 7.5pt;
+    font-style: italic;
+  }
+  .panel {
+    border: 1px solid #d0d7de;
+    border-radius: 3px;
+    padding: 5px 7px;
+    background: #fafbfc;
+    page-break-inside: avoid;
+    margin-bottom: 4px;
+  }
+  .panel h2 {
+    margin: 0 0 3px 0;
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #2c3e50;
+    border-bottom: 1px solid #d0d7de;
+    padding-bottom: 2px;
+  }
+  .panel.warn { background: #fff8e1; border-color: #f0c674; }
+  .panel.warn h2 { color: #8a5a00; border-bottom-color: #f0c674; }
+  .panel.danger { background: #fbecec; border-color: #d97070; }
+  .panel.danger h2 { color: #931616; border-bottom-color: #d97070; }
+  .panel.ok { background: #e8f4ea; border-color: #6abf76; }
+  .panel.ok h2 { color: #1d6b30; border-bottom-color: #6abf76; }
+  .panel.info { background: #e8f0fa; border-color: #6a9bd1; }
+  .panel.info h2 { color: #1d3f6b; border-bottom-color: #6a9bd1; }
+
+  .cmd {
+    background: #1e2a38;
+    color: #e8edf2;
+    padding: 5px 7px;
+    border-radius: 3px;
+    font-family: "SF Mono", "Consolas", "Monaco", monospace;
+    font-size: 8pt;
+    line-height: 1.32;
+    margin: 3px 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .cmd .label {
+    color: #6cb6ff;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 1px;
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  ul, ol {
+    margin: 1px 0 0 16px;
+    padding: 0;
+  }
+  li { margin-bottom: 2px; }
+  .never li { color: #931616; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 3px;
+    font-size: 8pt;
+  }
+  table th, table td {
+    border-bottom: 1px solid #e0e6eb;
+    padding: 2px 4px;
+    text-align: left;
+    vertical-align: top;
+  }
+  table th {
+    background: #ecf0f3;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+  .status-badge {
+    display: inline-block;
+    padding: 0 5px;
+    border-radius: 2px;
+    font-size: 7.5pt;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+  .footer {
+    margin-top: 6px;
+    padding-top: 3px;
+    border-top: 1px solid #d0d7de;
+    text-align: center;
+    color: #888;
+    font-size: 7pt;
+  }
+  kbd {
+    background: #ecf0f3;
+    border: 1px solid #c0c8cf;
+    border-radius: 2px;
+    padding: 0 3px;
+    font-family: "SF Mono", "Consolas", monospace;
+    font-size: 7.5pt;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Job Search with Claude Cowork — Daily Cheat Sheet</h1>
+  <div class="subtitle">v0.5 · Event-sourced tracker + reality check + profile audit + look-alike analysis · Print and keep at your desk</div>
+</div>
+
+<div class="panel info">
+  <h2>How It Works · Daily Rhythm</h2>
+  <p style="margin: 2px 0 4px 0;">
+  <b>Events is the source of truth (append-only). Applications is a state view derived from it.</b> Every action writes an Event. Lose Applications → rebuild from Events. Lose Events → lose history.
+  </p>
+  <p style="margin: 0;">
+  <b>Daily flow:</b> 7 AM discovery runs auto · morning check Dashboard + triage <span class="status-badge" style="background:#eaecee;">Found</span> rows · prepare 3-5 apps · review tabs + submit yourself · evening Gmail sweep updates statuses.
+  </p>
+</div>
+
+<div class="panel">
+  <h2>Recurring Commands (use daily / weekly)</h2>
+
+  <div class="cmd"><span class="label">1. Run discovery now</span>Run my daily job search. Run all active Saved Searches against listed boards via Chrome. Score, dedupe, write new rows + Discovery Found events. Write a snapshot per search/board to Market Snapshots.</div>
+
+  <div class="cmd"><span class="label">2. Prepare applications</span>Take the top 5 Found rows. Open each in Chrome, fill from my job-profile, draft a tailored cover letter. Stop before Submit. Set status to Drafted, write Status Changed events, save app URLs in Notes.</div>
+
+  <div class="cmd"><span class="label">3. Check for connections</span>For any Drafted/Submitted row, check LinkedIn for 1st-degree connections at the company. Draft referral DMs in the compose window. Do not send. Write Outreach Drafted events.</div>
+
+  <div class="cmd"><span class="label">4. Daily summary</span>Summarize my pipeline from Dashboard. Counts, anything Drafted &gt;3 days, Submitted &gt;14 biz days silent, interviews this week.</div>
+
+  <div class="cmd"><span class="label">5. Email sweep</span>Check Gmail for ATS confirmations, recruiter replies, interview invites, rejections from last 24 hours. Write Email Received events. Update status when unambiguous; flag ambiguous ones.</div>
+
+  <div class="cmd"><span class="label">6. Reality check (weekly)</span>Run a reality check on my searches. Use reality-check skill. Flag unrealistic configs, profile mismatches, or stuck patterns. Suggest pivots where data supports. Write a Reality Check event.</div>
+</div>
+
+<div class="panel">
+  <h2>Occasional Commands (monthly / quarterly)</h2>
+
+  <div class="cmd"><span class="label">7. Market trend check</span>Show market trend for [search name] over last 8 weeks. Plot weekly Total Results, compute slope, name top employers + strongest source.</div>
+
+  <div class="cmd"><span class="label">8. Replay history</span>Replay history of [Company]. Pull all Events for the App ID sorted by Timestamp. Render as a timeline.</div>
+
+  <div class="cmd"><span class="label">9. Profile audit (quarterly)</span>Audit my LinkedIn and résumé via the profile-audit skill. Grade by category, flag red flags (especially "currently unemployed" signaling), produce a prioritized fix list. If I have a gap, recommend specific consulting paths I could legitimately start. Write a Note Added event.</div>
+
+  <div class="cmd"><span class="label">10. Look-alike analysis (per role, refresh ~6mo)</span>Run a look-alike analysis on my target role via the look-alike-analysis skill. Sample 12-20 LinkedIn profiles of people who recently got the role (bias to 6-24 months in role). Identify patterns appearing in 60%+ of sample — skills, certs, headline structure, About conventions, career path. Anonymize subjects. Output a gap analysis: what I have vs. what's common. Log to Look-Alike Analysis tab. Write a Look-Alike Analysis event.</div>
+</div>
+
+<div class="panel danger">
+  <h2>Never Let Claude Do This</h2>
+  <ul class="never">
+    <li>Click Submit, Send, or Confirm on any application or message — <b>ever</b>.</li>
+    <li>Send a LinkedIn message or email without you reviewing and pressing Send.</li>
+    <li>Modify a past Event row. Events are immutable. Wrong event → write a corrective event, never edit.</li>
+    <li>Update Applications.Status without writing a Status Changed event. The Dashboard breaks if this happens.</li>
+    <li>Delete rows from Events. The history is the system.</li>
+    <li>Use credentials for banking, brokerage, or healthcare apps. Block these in Cowork settings.</li>
+    <li>Bypass a captcha or login wall. If it hits one, it pauses. That's correct.</li>
+    <li>Guess at EEO / work auth / sponsorship answers. If profile is blank, it asks.</li>
+  </ul>
+</div>
+
+<div class="panel">
+  <h2>Tracker Tabs</h2>
+  <table>
+    <tr><th style="width:120px;">Tab</th><th>What it is</th></tr>
+    <tr><td><b>Applications</b></td><td>One row per posting. Current state. <i>Derived from Events.</i></td></tr>
+    <tr><td><b>Events</b></td><td>Source of truth. Every action. Append-only. <b>Never delete.</b></td></tr>
+    <tr><td><b>Market Snapshots</b></td><td>Per-search-per-day stats. Drives trend queries.</td></tr>
+    <tr><td><b>Saved Searches</b></td><td>Discovery configuration. Edit to add/disable searches.</td></tr>
+    <tr><td><b>Look-Alike Analysis</b></td><td>Log of profile-pattern studies. Subjects anonymized.</td></tr>
+    <tr><td><b>Dashboard</b></td><td>Status counts, activity metrics, recent events. Read-only.</td></tr>
+    <tr><td><b>Profile Quick Ref</b></td><td>Optional cache of profile fields. Source is the skill.</td></tr>
+  </table>
+</div>
+
+<div class="panel">
+  <h2>Status Legend</h2>
+  <table>
+    <tr><td><span class="status-badge" style="background:#eaecee;">Found</span></td><td>Discovery surfaced it; not yet touched</td>
+        <td><span class="status-badge" style="background:#c3f0ca;">Interview</span></td><td>Invitation or schedule on calendar</td></tr>
+    <tr><td><span class="status-badge" style="background:#fff3cd;">Drafted</span></td><td>Form filled, awaiting your review</td>
+        <td><span class="status-badge" style="background:#70e000; color:#fff;">Offer</span></td><td>Offer extended</td></tr>
+    <tr><td><span class="status-badge" style="background:#cce5ff;">Submitted</span></td><td>You clicked Submit</td>
+        <td><span class="status-badge" style="background:#f5c6cb;">Rejected</span></td><td>Explicit no</td></tr>
+    <tr><td><span class="status-badge" style="background:#b8e0d2;">Acknowledged</span></td><td>ATS confirmation received</td>
+        <td><span class="status-badge" style="background:#d3d3d3;">Ghosted</span></td><td>30 biz days silent</td></tr>
+    <tr><td colspan="2"></td>
+        <td><span class="status-badge" style="background:#e8e8e8;">Archived</span></td><td>You discarded it</td></tr>
+  </table>
+</div>
+
+<div class="panel warn">
+  <h2>Troubleshooting</h2>
+  <ul>
+    <li><b>Applications.Status doesn't match latest Status Changed event.</b> Drift. Ask Cowork: "Rebuild Applications status column from Events." Don't manually patch.</li>
+    <li><b>Last Event Date column is blank.</b> The MAXIFS formula can't find any events for that App ID. Likely a missing Discovery Found event — add one with a backdated timestamp + note "Reconstructed from Applications row."</li>
+    <li><b>Hit a Pro usage limit.</b> Pro caps come fast when Chrome is running. Wait for reset, or upgrade to Max for heavy weeks. Run discovery-only sessions (no form-fills) on tight days.</li>
+    <li><b>Cowork can't see Chrome.</b> Re-pair Claude in Chrome from Cowork → Settings → Connectors.</li>
+    <li><b>Tracker has duplicate Applications rows.</b> Ask Cowork: "Dedupe Applications by Posting URL. Merge sources. Write a Manual Edit event for each merge."</li>
+    <li><b>Cover letters sound robotic.</b> Edit the cover-letter skill. Add 2-3 of your real letters as examples.</li>
+    <li><b>An ATS broke mid-fill.</b> Status stays Found, NOT Drafted. A Note Added event is written. Come back manually.</li>
+  </ul>
+</div>
+
+<div class="footer">
+  Quiver on Claude Cowork v0.5 · Skills: job-profile, profile-audit, look-alike-analysis, cover-letter, application-tracker, market-intelligence, form-fill-playbook, reality-check · Tracker workbook in Google Sheets
+</div>
+
+</body>
+</html>
