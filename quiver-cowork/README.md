@@ -1,5 +1,12 @@
 # Quiver on Claude Cowork — Implementation Kit (v0.5)
 
+> **This is Component 2 of [Quiver](../README.md): the Claude Cowork kit.** The
+> other component is **career-ops**, the terminal/CLI engine (repo root —
+> see [../docs/SETUP.md](../docs/SETUP.md)). For how the two work together —
+> shared pipeline, the two trackers and how to bridge them, and the recommended
+> end-to-end workflow — read **[../docs/INTEGRATION.md](../docs/INTEGRATION.md)**.
+
+
 A starter implementation of the Quiver PRD using Claude Cowork as the agent runtime.
 
 - **v0.1** — initial skills, state-table tracker

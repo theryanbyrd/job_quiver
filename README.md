@@ -1,339 +1,262 @@
-# Career-Ops
+# Quiver
 
 [English](README.md) | [Español](README.es.md) | [Português (Brasil)](README.pt-BR.md) | [한국어](README.ko-KR.md) | [日本語](README.ja.md) | [Українська](README.ua.md) | [Русский](README.ru.md) | [繁體中文](README.zh-TW.md)
 
+> English is the canonical README. The translated files above predate the Quiver
+> umbrella and currently describe only the `career-ops` CLI; they will lag until
+> re-synced.
+
 <p align="center">
-  <a href="https://x.com/santifer"><img src="docs/hero-banner.jpg" alt="Career-Ops — Multi-Agent Job Search System" width="800"></a>
+  <img src="docs/hero-banner.jpg" alt="Quiver — an AI job-search system" width="800">
 </p>
 
 <p align="center">
-  <em>I spent months applying to jobs the hard way. So I engineered the system I wish I had.</em><br>
-  Companies use AI to filter candidates. <strong>I just gave candidates AI to <em>choose</em> companies.</strong><br>
-  <em>Now it's open source.</em>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Claude_Code-000?style=flat&logo=anthropic&logoColor=white" alt="Claude Code">
-  <img src="https://img.shields.io/badge/OpenCode-111827?style=flat&logo=terminal&logoColor=white" alt="OpenCode">
-  <img src="https://img.shields.io/badge/Gemini_CLI-4285F4?style=flat&logo=google&logoColor=white" alt="Gemini CLI">
-  <img src="https://img.shields.io/badge/Codex_(soon)-6B7280?style=flat&logo=openai&logoColor=white" alt="Codex">
-  <img src="https://img.shields.io/badge/Node.js-339933?style=flat&logo=node.js&logoColor=white" alt="Node.js">
-  <img src="https://img.shields.io/badge/Go-00ADD8?style=flat&logo=go&logoColor=white" alt="Go">
-  <img src="https://img.shields.io/badge/Playwright-2EAD33?style=flat&logo=playwright&logoColor=white" alt="Playwright">
-  <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT">
-  <a href="TRADEMARK.md"><img src="https://img.shields.io/badge/Trademark-Policy-blue.svg" alt="Trademark Policy"></a>
-  <a href="https://discord.gg/8pRpHETxa4"><img src="https://img.shields.io/badge/Discord-5865F2?style=flat&logo=discord&logoColor=white" alt="Discord"></a>
-  <br>
-  <img src="https://img.shields.io/badge/EN-blue?style=flat" alt="EN">
-  <img src="https://img.shields.io/badge/ES-red?style=flat" alt="ES">
-  <img src="https://img.shields.io/badge/DE-grey?style=flat" alt="DE">
-  <img src="https://img.shields.io/badge/FR-blue?style=flat" alt="FR">
-  <img src="https://img.shields.io/badge/PT--BR-green?style=flat" alt="PT-BR">
-  <img src="https://img.shields.io/badge/KO-white?style=flat" alt="KO">
-  <img src="https://img.shields.io/badge/JA-red?style=flat" alt="JA">
-  <img src="https://img.shields.io/badge/ZH--CN-red?style=flat" alt="ZH-CN">
-  <img src="https://img.shields.io/badge/ZH--TW-blue?style=flat" alt="ZH-TW">
+  <em>Companies use AI to filter candidates. Quiver gives candidates AI to <strong>choose</strong> companies — and to actually run the search.</em>
 </p>
 
 ---
 
-<p align="center">
-  <img src="docs/demo.gif" alt="Career-Ops Demo" width="800">
-</p>
+## What Is Quiver
 
-<p align="center"><strong>740+ job listings evaluated · 100+ personalized CVs · 1 dream role landed</strong></p>
+**Quiver is an AI job-search system with two interchangeable runtimes that are
+designed to be used together.** Both run the same conceptual pipeline — discover
+roles, score them against your real background, tailor your materials, apply,
+track everything, and prep for interviews — but they live in different places and
+play to different strengths.
 
-<p align="center"><a href="https://discord.gg/8pRpHETxa4"><img src="https://img.shields.io/badge/Join_the_community-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a></p>
+| Component | Runtime | Lives in | Best at |
+|-----------|---------|----------|---------|
+| **career-ops** | Terminal / AI coding CLI (Claude Code, Gemini CLI, OpenCode) | Your machine, local files | High-volume **discovery, scoring, and document generation** — zero-token ATS scanning, parallel A–F evaluation, ATS-optimized CV PDFs, a Go dashboard |
+| **quiver-cowork** | Claude Cowork (desktop app) + Claude in Chrome | Cowork projects + Google Workspace | The **live application loop** — filling forms in a real browser, drafting outreach, an event-sourced tracker, and data-driven coaching (profile audit, look-alike analysis, reality checks) |
 
-## What Is This
+> **Naming.** *Quiver* is the umbrella project (and the name of this repository,
+> `job_quiver`). *career-ops* remains the name of the CLI component — its npm
+> package, its `/career-ops` slash command, and its modes are unchanged. Nothing
+> in code was renamed; "Quiver" is the system the two components add up to.
 
-Career-Ops ([career-ops.org](https://career-ops.org), also known as **careerops**) turns any AI coding CLI into a full job search command center. Instead of manually tracking applications in a spreadsheet, you get an AI-powered pipeline that:
+The throughline of both is the same philosophy: **this is a filter, not a
+spray-and-pray cannon.** Quiver exists to help you find the few roles worth your
+time out of hundreds, present yourself credibly, and apply deliberately — with a
+human always making the final call. Neither component ever clicks Submit for you.
 
-- **Evaluates offers** with a structured A-F scoring system (10 weighted dimensions)
-- **Generates tailored PDFs** -- ATS-optimized CVs customized per job description
-- **Scans portals** automatically (Greenhouse, Ashby, Lever, company pages)
-- **Processes in batch** -- evaluate 10+ offers in parallel with sub-agents
-- **Tracks everything** in a single source of truth with integrity checks
+---
 
-> **Important: This is NOT a spray-and-pray tool.** Career-ops is a filter -- it helps you find the few offers worth your time out of hundreds. The system strongly recommends against applying to anything scoring below 4.0/5. Your time is valuable, and so is the recruiter's. Always review before submitting.
+## How They Work Together
 
-Career-ops is agentic: Claude Code navigates career pages with Playwright, evaluates fit by reasoning about your CV vs the job description (not keyword matching), and adapts your resume per listing.
-
-> **Heads up: the first evaluations won't be great.** The system doesn't know you yet. Feed it context -- your CV, your career story, your proof points, your preferences, what you're good at, what you want to avoid. The more you nurture it, the better it gets. Think of it as onboarding a new recruiter: the first week they need to learn about you, then they become invaluable.
-
-Built by someone who used it to evaluate 740+ job offers, generate 100+ tailored CVs, and land a Head of Applied AI role. [Read the full case study](https://santifer.io/career-ops-system).
-
-## Features
-
-| Feature                  | Description                                                                                                                              |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **Auto-Pipeline**        | Paste a URL, get a full evaluation + PDF + tracker entry                                                                                 |
-| **6-Block Evaluation**   | Role summary, CV match, level strategy, comp research, personalization, interview prep (STAR+R)                                          |
-| **Interview Story Bank** | Accumulates STAR+Reflection stories across evaluations -- 5-10 master stories that answer any behavioral question                        |
-| **Negotiation Scripts**  | Salary negotiation frameworks, geographic discount pushback, competing offer leverage                                                    |
-| **ATS PDF Generation**   | Keyword-injected CVs with Space Grotesk + DM Sans design                                                                                 |
-| **Portal Scanner**       | 45+ companies pre-configured (Anthropic, OpenAI, ElevenLabs, Retool, n8n...) + custom queries across Ashby, Greenhouse, Lever, Wellfound |
-| **Batch Processing**     | Parallel evaluation with `claude -p` workers                                                                                             |
-| **Dashboard TUI**        | Terminal UI to browse, filter, and sort your pipeline                                                                                    |
-| **Human-in-the-Loop**    | AI evaluates and recommends, you decide and act. The system never submits an application -- you always have the final call               |
-| **Pipeline Integrity**   | Automated merge, dedup, status normalization, health checks                                                                              |
-
-## Quick Start
-
-```bash
-# 1. Clone and install
-git clone https://github.com/santifer/career-ops.git
-cd career-ops && npm install
-npx playwright install chromium   # Required for PDF generation
-
-# 2. Check setup
-npm run doctor                     # Validates all prerequisites
-
-# 3. Configure
-cp config/profile.example.yml config/profile.yml  # Edit with your details
-cp templates/portals.example.yml portals.yml       # Customize companies
-
-# 4. Add your CV
-# Create cv.md in the project root with your CV in markdown
-
-# 5. Personalize with Claude
-claude   # Open Claude Code in this directory
-
-# Then ask Claude to adapt the system to you:
-# "Change the archetypes to backend engineering roles"
-# "Translate the modes to English"
-# "Add these 5 companies to portals.yml"
-# "Update my profile with this CV I'm pasting"
-
-# 6. Start using
-# Paste a job URL or run /career-ops
-```
-
-> **The system is designed to be customized by Claude itself.** Modes, archetypes, scoring weights, negotiation scripts -- just ask Claude to change them. It reads the same files it uses, so it knows exactly what to edit.
-
-See [docs/SETUP.md](docs/SETUP.md) for the full setup guide.
-
-## Gemini CLI Integration
-
-Career-ops supports [Gemini CLI](https://github.com/google-gemini/gemini-cli) natively — the same way it supports Claude Code and OpenCode. All 15 slash commands are available, using the same `modes/*.md` evaluation logic.
-
-### Option A — Native Gemini CLI (Recommended)
-
-```bash
-# 1. Install Gemini CLI
-npm install -g @google/gemini-cli
-# or: npx @google/gemini-cli --version
-
-# 2. Authenticate (free — uses your Google account)
-gemini auth
-
-# 3. Run in the career-ops directory
-cd career-ops
-gemini
-
-# 4. Use slash commands just like Claude Code
-/career-ops "Senior AI Engineer at Anthropic..."
-/career-ops-evaluate --file ./jds/openai.txt
-/career-ops-scan
-/career-ops-pdf
-/career-ops-tracker
-```
-
-The `GEMINI.md` file is auto-loaded as context. All 15 commands are defined in `.gemini/commands/*.toml`.
-
-### Option B — Standalone API Script (No CLI install needed)
-
-```bash
-# 1. Get a free API key at https://aistudio.google.com/apikey
-cp .env.example .env
-# Edit .env → set GEMINI_API_KEY=your_key_here
-
-# 2. Install dependencies
-npm install
-
-# 3. Evaluate a job description
-node gemini-eval.mjs "We are looking for a Senior AI Engineer..."
-node gemini-eval.mjs --file ./jds/my-job.txt
-npm run gemini:eval -- "JD text here"
-```
-
-> **Free tier:** Both options work without billing. Native CLI uses Google OAuth; the API script uses `gemini-2.5-flash` (15 RPM, 1M tokens/day free).
-
-## Usage
-
-Career-ops is a single slash command with multiple modes:
+Both components implement the same pipeline. The diagram below shows who owns each
+stage when you run them together — and where the two halves meet.
 
 ```
-/career-ops                → Show all available commands
-/career-ops {paste a JD}   → Full auto-pipeline (evaluate + PDF + tracker)
-/career-ops scan           → Scan portals for new offers
-/career-ops pdf            → Generate ATS-optimized CV
-/career-ops batch          → Batch evaluate multiple offers
-/career-ops tracker        → View application status
-/career-ops apply          → Fill application forms with AI
-/career-ops pipeline       → Process pending URLs
-/career-ops contacto       → LinkedIn outreach message
-/career-ops deep           → Deep company research
-/career-ops training       → Evaluate a course/cert
-/career-ops project        → Evaluate a portfolio project
+        DISCOVER ──► EVALUATE ──► TAILOR ──► APPLY ──► TRACK ──► FOLLOW-UP / PREP
+           │            │           │          │         │              │
+career-ops │ scan.mjs   │ A–F batch │ CV PDF   │  (apply │ local        │ interview-prep
+ (CLI)     │ 45+ ATS    │ parallel  │ engine   │   mode) │ markdown/TSV │ STAR mode
+           │ zero-token │ scoring   │          │         │ + Go TUI     │ analyze-patterns
+           │            │           │          │         │              │
+quiver-    │ Chrome     │ profile-  │ cover-   │ Chrome  │ event-sourced│ reality-check
+ cowork    │ saved      │ match vs  │ letter   │ form-   │ Google Sheet │ market-intel
+ (Cowork)  │ searches   │ job-      │ skill    │ fill    │ (Events =    │ look-alike
+           │ (logged-in │ profile   │          │ never   │  source of   │ profile-audit
+           │  boards)   │ skill     │          │ submit  │  truth)      │
+           └──────┬─────┴─────┬─────┴────┬─────┴────┬────┴──────┬───────┘
+                  │           │          │          │           │
+                  ▼           ▼          ▼          ▼           ▼
+            The seam: career-ops produces a scored shortlist + CV PDFs locally;
+            quiver-cowork is where those get applied, tracked, and coached on.
+            See docs/INTEGRATION.md for the bridge and the status mapping.
 ```
 
-Or just paste a job URL or description directly -- career-ops auto-detects it and runs the full pipeline.
+In short: **career-ops is the engine room, quiver-cowork is the cockpit.** Use
+the CLI to do cheap, parallel, high-volume work (scan many ATS feeds, batch-score
+dozens of roles, generate tailored CV PDFs). Hand the survivors to Cowork to
+apply in a live browser, chase referrals, keep the event-sourced tracker honest,
+and run the weekly coaching loop.
 
-## How It Works
+The two halves keep separate data stores today (local markdown/TSV vs. a Google
+Sheet), so the handoff between them is currently a deliberate, documented bridge
+rather than an automatic sync. **[docs/INTEGRATION.md](docs/INTEGRATION.md)** is
+the full account of how they combine, including the data-model seam, the status
+vocabulary mapping, and the recommended end-to-end workflow.
 
-```
-You paste a job URL or description
-        │
-        ▼
-┌──────────────────┐
-│  Archetype       │  Classifies: LLMOps / Agentic / PM / SA / FDE / Transformation
-│  Detection       │
-└────────┬─────────┘
-         │
-┌────────▼─────────┐
-│  A-F Evaluation  │  Match, gaps, comp research, STAR stories
-│  (reads cv.md)   │
-└────────┬─────────┘
-         │
-    ┌────┼────┐
-    ▼    ▼    ▼
- Report  PDF  Tracker
-  .md   .pdf   .tsv
-```
+### Which one should I start with?
 
-## Pre-configured Portals
+- **Just want to start applying today, in your browser, with the least setup?**
+  Start with **quiver-cowork** (`quiver-cowork/README.md`).
+- **Comfortable in a terminal and want maximum throughput on discovery + scoring +
+  CV generation?** Start with **career-ops** (`docs/SETUP.md`).
+- **Want the full system?** Do both — set up Cowork for the daily loop, add
+  career-ops as the bulk engine, and follow the combined workflow in
+  [docs/INTEGRATION.md](docs/INTEGRATION.md).
 
-The scanner comes with **45+ companies** ready to scan and **19 search queries** across major job boards. Copy `templates/portals.example.yml` to `portals.yml` and add your own:
+---
 
-**AI Labs:** Anthropic, OpenAI, Mistral, Cohere, LangChain, Pinecone
-**Voice AI:** ElevenLabs, PolyAI, Parloa, Hume AI, Deepgram, Vapi, Bland AI
-**AI Platforms:** Retool, Airtable, Vercel, Temporal, Glean, Arize AI
-**Contact Center:** Ada, LivePerson, Sierra, Decagon, Talkdesk, Genesys
-**Enterprise:** Salesforce, Twilio, Gong, Dialpad
-**LLMOps:** Langfuse, Weights & Biases, Lindy, Cognigy, Speechmatics
-**Automation:** n8n, Zapier, Make.com
-**European:** Factorial, Attio, Tinybird, Clarity AI, Travelperk
+## Component 1 — career-ops (CLI engine)
 
-**Job boards searched:** Ashby, Greenhouse, Lever, Wellfound, Workable, RemoteFront
+Turns any AI coding CLI into a job-search command center. You paste a job URL or
+description and it classifies the role into an archetype, scores it against your
+CV on a structured A–F / 10-dimension rubric (reasoning about fit, not keyword
+matching), generates an ATS-optimized CV PDF, and writes the result to a local
+tracker.
 
-By default `node scan.mjs` (a.k.a. `npm run scan`) trusts what each ATS feed returns. Some companies leave stale postings in their public API even after the role is closed, so those expired entries can leak into `pipeline.md`. Pass `--verify` to launch Playwright after the API pass and drop expired postings before they hit the pipeline:
+| Capability | Description |
+|------------|-------------|
+| **Zero-token portal scanner** | `scan.mjs` hits Greenhouse / Ashby / Lever APIs and local parsers for 45+ pre-configured companies + ~19 board queries — no LLM tokens spent on discovery. Optional `--verify` Playwright pass drops expired postings. |
+| **A–F evaluation** | Six blocks (role summary, CV match, level strategy, comp research, personalization, interview prep) → weighted score across 10 dimensions. |
+| **Batch processing** | Parallel headless workers (`claude -p` or any CLI's headless mode) evaluate many offers at once. |
+| **ATS PDF generation** | `generate-pdf.mjs` renders a print-quality, ATS-parseable CV from an HTML template (Space Grotesk + DM Sans). |
+| **Pipeline integrity** | `merge`, `dedup`, `normalize`, `verify`, `sync-check`, `patterns` keep the local tracker consistent. |
+| **Dashboard TUI** | A Go (Bubble Tea) terminal UI to browse, filter, and sort the pipeline. |
 
-```bash
-node scan.mjs --verify          # zero-token discovery + Playwright liveness check
-```
-
-The verification is sequential and only runs against new offers (after dedup), so the cost stays bounded.
-
-## Dashboard TUI
-
-The built-in terminal dashboard lets you browse your pipeline visually:
-
-```bash
-cd dashboard
-go build -o career-dashboard .
-./career-dashboard --path ..
-```
-
-Features: 6 filter tabs, 4 sort modes, grouped/flat view, lazy-loaded previews, inline status changes.
-
-## Project Structure
+Single slash command with modes:
 
 ```
-career-ops/
-├── AGENTS.md                    # Canonical agent instructions (all CLIs)
-├── CLAUDE.md                    # Claude Code wrapper (imports AGENTS.md)
-├── cv.md                        # Your CV (create this)
-├── article-digest.md            # Your proof points (optional)
-├── config/
-│   └── profile.example.yml      # Template for your profile
-├── modes/                       # 14 skill modes
-│   ├── _shared.md               # Shared context (customize this)
-│   ├── oferta.md                # Single evaluation
-│   ├── pdf.md                   # PDF generation
-│   ├── scan.md                  # Portal scanner
-│   ├── batch.md                 # Batch processing
-│   └── ...
-├── templates/
-│   ├── cv-template.html         # ATS-optimized CV template
-│   ├── portals.example.yml      # Scanner config template
-│   └── states.yml               # Canonical statuses
-├── batch/
-│   ├── batch-prompt.md          # Self-contained worker prompt
-│   └── batch-runner.sh          # Orchestrator script
-├── dashboard/                   # Go TUI pipeline viewer
-├── data/                        # Your tracking data (gitignored)
-├── reports/                     # Evaluation reports (gitignored)
-├── output/                      # Generated PDFs (gitignored)
-├── fonts/                       # Space Grotesk + DM Sans
-├── docs/                        # Setup, customization, architecture
-└── examples/                    # Sample CV, report, proof points
+/career-ops {paste a JD}   → full auto-pipeline (evaluate + PDF + tracker)
+/career-ops scan           → scan portals for new offers
+/career-ops pdf            → generate ATS-optimized CV
+/career-ops batch          → batch evaluate multiple offers
+/career-ops tracker        → view application status
+/career-ops apply          → fill application forms
+/career-ops pipeline       → process pending URLs
+/career-ops deep           → deep company research
+/career-ops contacto       → outreach message
+/career-ops training       → evaluate a course/cert
+/career-ops project        → evaluate a portfolio project
 ```
+
+Setup: **[docs/SETUP.md](docs/SETUP.md)** · Architecture: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** ·
+Scripts: **[docs/SCRIPTS.md](docs/SCRIPTS.md)** · Customization: **[docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md)**
+
+---
+
+## Component 2 — quiver-cowork (Cowork kit)
+
+A self-contained kit (`quiver-cowork/`) for running the search on **Claude Cowork**,
+the desktop agent. Where career-ops works on local files in a terminal, Cowork
+drives a real browser via **Claude in Chrome** and reads your **Gmail, Google
+Calendar, and Google Drive** — so it can fill applications, watch for recruiter
+replies, schedule interviews, and keep a shared tracker, all from one place.
+
+It ships eight skills, an event-sourced spreadsheet, and a printable cheat sheet:
+
+| Skill | What it does |
+|-------|--------------|
+| **job-profile** | Canonical structured profile (résumé, targets, salary floor, work auth, EEO, blocklist). The single source of truth Cowork pulls from. |
+| **profile-audit** | Grades your LinkedIn + résumé on a 12-category 0–10 rubric; flags red flags (notably "currently unemployed" signaling) with a prioritized fix list. |
+| **look-alike-analysis** | Studies 12–20 anonymized profiles of people who *recently* got your target role; reports patterns appearing in 60%+ of the sample as a gap analysis. |
+| **cover-letter** | Three tailoring templates (IC, leadership, career-change) + a banned-phrases list to avoid AI mush. |
+| **application-tracker** | Defines the event-sourced Google Sheets schema and the append/update rules. |
+| **market-intelligence** | Trend queries over the Market Snapshots tab — is this market growing or shrinking, which boards are hot. |
+| **form-fill-playbook** | ATS quirks for Workday, Greenhouse, Lever, Ashby, iCIMS, Taleo, BrassRing, SmartRecruiters, Jobvite. "Never click Submit" repeated explicitly. |
+| **reality-check** | Once-a-week, data-cited contrarian feedback ("73 days, 84 applications, 13% acknowledgment") — never vibes. |
+
+The tracker workbook (`Applications-Tracker-Template.xlsx`) is **event-sourced**:
+the *Events* tab is the append-only source of truth, *Applications* is a derived
+state view, and there are tabs for Market Snapshots, Saved Searches, Look-Alike
+Analysis, a Dashboard, and a Profile Quick Ref.
+
+Full setup, daily commands, and guardrails: **[quiver-cowork/README.md](quiver-cowork/README.md)**.
+
+---
+
+## The Combined Workflow (recommended)
+
+Order matters. The most common job-search mistake is starting with applications
+when the profile or the target is the real bottleneck. The recommended sequence:
+
+1. **Fix the foundation (Cowork).** Run `profile-audit`, then `look-alike-analysis`,
+   then `reality-check`. ~4–6 hours up front that pays back in response rate.
+2. **Discover at volume (career-ops + Cowork).** Run `npm run scan` for cheap bulk
+   ATS coverage; run Cowork discovery for boards that need a logged-in session
+   (LinkedIn, Indeed, ZipRecruiter, Wellfound).
+3. **Score deeply (career-ops).** Batch-evaluate the finds with the A–F rubric —
+   parallel and token-cheap.
+4. **Generate materials (career-ops).** Produce ATS CV PDFs for everything that
+   clears your score threshold.
+5. **Apply + track (Cowork).** Hand the shortlist (and its PDFs) to Cowork: it
+   fills each form in Chrome, drafts a tailored cover letter, stops before Submit,
+   and logs every action to the event-sourced sheet. You review and submit.
+6. **Run the loop (Cowork).** Daily email sweep + status updates, referral outreach
+   drafts, and the weekly Sunday `reality-check`. Use career-ops `analyze-patterns`
+   for outcome analysis when you have enough history.
+
+See [docs/INTEGRATION.md](docs/INTEGRATION.md) for the bridge between step 4 and
+step 5 (how a career-ops shortlist becomes rows + Discovery Found events in the
+Cowork sheet) and the status-vocabulary mapping between the two trackers.
+
+---
+
+## Guardrails (both components)
+
+These hold in every runtime:
+
+- **Never auto-submit.** No component clicks Submit, Send, or Confirm on an
+  application or message. Cowork stages drafts; you press the button.
+- **Human-in-the-loop.** The AI evaluates, drafts, and recommends. You decide.
+- **Truthful framing only.** Quiver never fabricates experience, clients, or
+  consulting work — only honest presentation of real work.
+- **Data-cited, not vibes.** Coaching skills cite specific numbers from your data.
+- **You own your data.** Everything stays in your accounts and is sent only to the
+  AI provider you choose.
+
+---
+
+## Repository Layout
+
+```
+job_quiver/
+├── README.md                 ← this hub
+├── AGENTS.md / CLAUDE.md / GEMINI.md   ← career-ops CLI agent instructions
+├── modes/                    ← career-ops evaluation modes (14)
+├── scan.mjs, generate-pdf.mjs, merge-tracker.mjs, ...   ← career-ops scripts
+├── dashboard/                ← career-ops Go TUI
+├── templates/, config/, fonts/         ← career-ops templates & config
+├── docs/
+│   ├── INTEGRATION.md        ← how the two components combine (start here)
+│   ├── ARCHITECTURE.md       ← career-ops (CLI) architecture
+│   ├── SETUP.md              ← career-ops setup
+│   ├── SCRIPTS.md            ← career-ops scripts reference
+│   └── CUSTOMIZATION.md      ← career-ops customization
+└── quiver-cowork/            ← Component 2: the Cowork kit
+    ├── README.md             ← Cowork setup + daily commands
+    ├── Cheat-Sheet.pdf       ← printable one-pager
+    ├── Applications-Tracker-Template.xlsx   ← event-sourced, 7 tabs
+    └── skills/               ← 8 Cowork skills
+```
+
+---
 
 ## Tech Stack
 
-![Claude Code](https://img.shields.io/badge/Claude_Code-000?style=flat&logo=anthropic&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=node.js&logoColor=white)
-![Playwright](https://img.shields.io/badge/Playwright-2EAD33?style=flat&logo=playwright&logoColor=white)
-![Go](https://img.shields.io/badge/Go-00ADD8?style=flat&logo=go&logoColor=white)
-![Bubble Tea](https://img.shields.io/badge/Bubble_Tea-FF75B5?style=flat&logo=go&logoColor=white)
-
-- **Agent**: Claude Code with custom skills and modes
+- **Agents**: Claude Code / Gemini CLI / OpenCode (career-ops) · Claude Cowork + Claude in Chrome (quiver-cowork)
+- **Discovery**: Playwright + Greenhouse/Ashby/Lever APIs (career-ops) · Chrome saved searches (Cowork)
 - **PDF**: Playwright/Puppeteer + HTML template
-- **Scanner**: Playwright + Greenhouse API + WebSearch
-- **Dashboard**: Go + Bubble Tea + Lipgloss (Catppuccin Mocha theme)
-- **Data**: Markdown tables + YAML config + TSV batch files
+- **Dashboard**: Go + Bubble Tea + Lipgloss (career-ops) · Google Sheets Dashboard tab (Cowork)
+- **Data**: Markdown tables + YAML + TSV (career-ops) · event-sourced Google Sheet (Cowork)
 
-## Also Open Source
+---
 
-- **[cv-santiago](https://github.com/santifer/cv-santiago)** -- The portfolio website (santifer.io) with AI chatbot, LLMOps dashboard, and case studies. If you need a portfolio to showcase alongside your job search, fork it and make it yours.
+## Origin & Credit
 
-## About the Author
-
-I'm Santiago -- Head of Applied AI, former founder (built and sold a business that still runs with my name on it). I built career-ops to manage my own job search. It worked: I used it to land my current role.
-
-My portfolio and other open source projects → [santifer.io](https://santifer.io)
-
-## Star History
-
-<a href="https://www.star-history.com/?repos=santifer%2Fcareer-ops&type=timeline&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=santifer/career-ops&type=timeline&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=santifer/career-ops&type=timeline&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=santifer/career-ops&type=timeline&legend=top-left" />
- </picture>
-</a>
+career-ops was built by Santiago Fernández de Valderrama ([santifer.io](https://santifer.io)),
+who used it to evaluate 740+ offers, generate 100+ tailored CVs, and land a Head
+of Applied AI role — see the upstream project at
+[santifer/career-ops](https://github.com/santifer/career-ops) and the
+[case study](https://santifer.io/career-ops-system). The quiver-cowork kit adapts
+that workflow to Claude Cowork and adds the event-sourced tracker and coaching
+skills.
 
 ## Disclaimer
 
-**career-ops is a local, open-source tool — NOT a hosted service.** By using this software, you acknowledge:
-
-1. **You control your data.** Your CV, contact info, and personal data stay on your machine and are sent directly to the AI provider you choose (Anthropic, OpenAI, etc.). We do not collect, store, or have access to any of your data.
-2. **You control the AI.** The default prompts instruct the AI not to auto-submit applications, but AI models can behave unpredictably. If you modify the prompts or use different models, you do so at your own risk. **Always review AI-generated content for accuracy before submitting.**
-3. **You comply with third-party ToS.** You must use this tool in accordance with the Terms of Service of the career portals you interact with (Greenhouse, Lever, Workday, LinkedIn, etc.). Do not use this tool to spam employers or overwhelm ATS systems.
-4. **No guarantees.** Evaluations are recommendations, not truth. AI models may hallucinate skills or experience. The authors are not liable for employment outcomes, rejected applications, account restrictions, or any other consequences.
-
-See [LEGAL_DISCLAIMER.md](LEGAL_DISCLAIMER.md) for full details. This software is provided under the [MIT License](LICENSE) "as is", without warranty of any kind.
-
-## Contributors
-
-<a href="https://github.com/santifer/career-ops/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=santifer/career-ops" />
-</a>
-
-Got hired using career-ops? [Share your story!](https://github.com/santifer/career-ops/issues/new?template=i-got-hired.yml)
+Quiver is a local/desktop, open-source toolkit — **not a hosted service**. Your
+CV and personal data stay in your accounts and are sent only to the AI provider
+you choose. Evaluations are recommendations, not truth; AI can hallucinate, so
+**always review generated content before submitting**. You are responsible for
+complying with the Terms of Service of any job board or ATS you use. See
+[LEGAL_DISCLAIMER.md](LEGAL_DISCLAIMER.md). Provided under the [MIT License](LICENSE)
+"as is", without warranty of any kind.
 
 ## License & Trademark
 
-The code is licensed under [MIT](LICENSE). The "career-ops" name and
-brand are governed by the [Trademark Policy](TRADEMARK.md) — permissive
-for community use, reserved for commercial product naming and
-endorsement.
-
-## Let's Connect
-
-[![Website](https://img.shields.io/badge/santifer.io-000?style=for-the-badge&logo=safari&logoColor=white)](https://santifer.io)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/santifer)
-[![X](https://img.shields.io/badge/X-000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/santifer)
-[![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/8pRpHETxa4)
-[![Email](https://img.shields.io/badge/Email-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:hi@santifer.io)
+Code is licensed under [MIT](LICENSE). The "career-ops" name and brand are
+governed by the [Trademark Policy](TRADEMARK.md) — permissive for community use,
+reserved for commercial product naming and endorsement.
