@@ -1,5 +1,11 @@
 # Architecture
 
+> **Scope: the `career-ops` (CLI) component of Quiver.** This document covers the
+> terminal/CLI engine. For how career-ops combines with the **quiver-cowork**
+> Cowork kit (shared pipeline, the two trackers and their seam, the recommended
+> end-to-end workflow), see **[INTEGRATION.md](INTEGRATION.md)**. Project hub: **[../README.md](../README.md)**.
+
+
 ## System Overview
 
 ```

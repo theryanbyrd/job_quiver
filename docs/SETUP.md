@@ -1,5 +1,12 @@
 # Setup Guide
 
+> **Scope: setting up the `career-ops` (CLI) component of Quiver.** Prefer to run
+> the search from the Claude Cowork desktop app instead (browser form-filling,
+> Gmail/Calendar/Drive, event-sourced tracker)? Use the **quiver-cowork** kit:
+> **[../quiver-cowork/README.md](../quiver-cowork/README.md)**. To run both together,
+> see **[INTEGRATION.md](INTEGRATION.md)**. Project hub: **[../README.md](../README.md)**.
+
+
 ## Prerequisites
 
 - [Claude Code](https://claude.ai/code) installed and configured
