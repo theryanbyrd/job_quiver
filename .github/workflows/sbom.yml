@@ -11,16 +11,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Generate SBOM (SPDX)
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
         with:
           artifact-name: career-ops-sbom.spdx.json
           format: spdx-json
           output-file: career-ops-sbom.spdx.json
 
       - name: Upload SBOM to release
+        # Event data goes through env, never interpolated straight into the
+        # shell — `${{ }}` in a run: block is textual substitution, so a tag
+        # carrying shell metacharacters would execute in a contents:write job.
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload ${{ github.event.release.tag_name }} career-ops-sbom.spdx.json
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" career-ops-sbom.spdx.json

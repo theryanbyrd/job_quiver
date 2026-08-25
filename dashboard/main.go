@@ -106,7 +106,16 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case screens.PipelineOpenURLMsg:
-		url := msg.URL
+		// Defence in depth: the loaders in internal/data already validate job
+		// URLs, but this is the point where a string is handed to the OS
+		// launcher, so re-check the scheme here rather than trusting the
+		// caller. `open`/`xdg-open`/`start` will happily act on a non-http
+		// scheme or treat a leading "-" as a flag.
+		url, ok := data.SafeExternalURL(msg.URL)
+		if !ok {
+			fmt.Fprintf(os.Stderr, "WARN: refusing to open non-http(s) URL: %q\n", msg.URL)
+			return m, nil
+		}
 		return m, func() tea.Msg {
 			var cmd *exec.Cmd
 			switch runtime.GOOS {

@@ -6,9 +6,17 @@ set -euo pipefail
 # tracks state in batch-state.tsv for resumability.
 #
 # NOTE: This script is Claude Code-specific. It uses claude -p with
-# --dangerously-skip-permissions and --append-system-prompt-file flags
-# that are not available in other CLIs. Multi-CLI support is out of scope
-# for now — contributions welcome.
+# --allowed-tools and --append-system-prompt-file flags that are not
+# available in other CLIs. Multi-CLI support is out of scope for now —
+# contributions welcome.
+#
+# SECURITY: workers process job-posting text fetched from the open web,
+# which is untrusted input that reaches the model's context. They therefore
+# run under an explicit tool allowlist (WORKER_TOOLS below) rather than
+# --dangerously-skip-permissions. Do NOT widen this to a bare `Bash` grant:
+# a prompt injection in a job description would become code execution in
+# the user's project directory. If a worker needs a new script, add that
+# exact script to the allowlist.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -34,6 +42,17 @@ START_FROM=0
 MAX_RETRIES=2
 MIN_SCORE=0
 MODEL=""  # empty = let claude -p use the Claude Max default
+
+# Tools a batch worker is permitted to use. Derived from batch-prompt.md:
+# it reads cv.md/profile/template files, writes a report + tracker TSV,
+# researches comp via WebSearch, falls back to WebFetch for the JD, and
+# shells out to exactly one script (generate-pdf.mjs). Nothing else.
+WORKER_TOOLS='Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,Bash(node generate-pdf.mjs:*)'
+
+# Per-run private scratch dir for JD handoff files. Created with mode 0700 by
+# mktemp -d, so another local user can neither read the JD nor pre-create a
+# symlink at a guessable path for the worker to write through.
+JD_DIR=""
 
 usage() {
   cat <<'USAGE'
@@ -113,6 +132,11 @@ release_lock() {
     return
   fi
   rm -f "$LOCK_FILE"
+  # Only the main process removes the shared JD scratch dir — a parallel
+  # worker subshell exiting must not delete files its siblings still need.
+  if [[ -n "$JD_DIR" && -d "$JD_DIR" ]]; then
+    rm -rf "$JD_DIR"
+  fi
 }
 
 trap release_lock EXIT
@@ -135,6 +159,9 @@ check_prerequisites() {
   fi
 
   mkdir -p "$LOGS_DIR" "$TRACKER_DIR" "$REPORTS_DIR"
+
+  # Private, unpredictable scratch dir for JD handoff (mode 0700).
+  JD_DIR=$(mktemp -d "${TMPDIR:-/tmp}/career-ops-batch.XXXXXXXX")
 }
 
 # Initialize state file if it doesn't exist
@@ -240,6 +267,10 @@ next_report_num_unlocked() {
       local basename
       basename=$(basename "$f")
       local num="${basename%%-*}"
+      # Skip reports whose filename has no numeric prefix. Without this,
+      # `10#$num` on a non-numeric string is an arithmetic error that aborts
+      # the whole batch under `set -e`.
+      [[ "$num" =~ ^[0-9]+$ ]] || continue
       num=$((10#$num)) # Remove leading zeros for arithmetic
       if (( num > max_num )); then
         max_num=$num
@@ -250,6 +281,7 @@ next_report_num_unlocked() {
   if [[ -f "$STATE_FILE" ]]; then
     while IFS=$'\t' read -r _ _ _ _ _ rnum _ _ _; do
       [[ "$rnum" == "report_num" || "$rnum" == "-" || -z "$rnum" ]] && continue
+      [[ "$rnum" =~ ^[0-9]+$ ]] || continue
       local n=$((10#$rnum))
       if (( n > max_num )); then
         max_num=$n
@@ -326,7 +358,7 @@ process_offer() {
   report_num=$(reserve_report_num "$id" "$url" "$started_at" "$retries")
   local date
   date=$(date +%Y-%m-%d)
-  local jd_file="/tmp/batch-jd-${id}.txt"
+  local jd_file="$JD_DIR/batch-jd-${id}.txt"
 
   echo "--- Processing offer #$id: $url (report $report_num, attempt $((retries + 1)))"
 
@@ -343,15 +375,24 @@ process_offer() {
 
   # Prepare system prompt with placeholders resolved
   local resolved_prompt="$BATCH_DIR/.resolved-prompt-${id}.md"
-  # Escape sed delimiter characters in variables to prevent substitution breakage
+  # Escape characters that are special in a sed replacement: the delimiter
+  # (|), the escape char itself (\), and & — which sed expands to the whole
+  # match. Job URLs routinely carry query strings (?a=1&b=2), so leaving &
+  # unescaped re-inserted the literal {{URL}} into the worker's prompt.
+  # Backslash must be escaped first, or it would double-escape the others.
   local esc_url esc_jd_file esc_report_num esc_date esc_id
-  esc_url="${url//\\/\\\\}"
-  esc_url="${esc_url//|/\\|}"
-  esc_jd_file="${jd_file//\\/\\\\}"
-  esc_jd_file="${esc_jd_file//|/\\|}"
-  esc_report_num="${report_num//|/\\|}"
-  esc_date="${date//|/\\|}"
-  esc_id="${id//|/\\|}"
+  sed_escape() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//&/\\&}"
+    s="${s//|/\\|}"
+    printf '%s' "$s"
+  }
+  esc_url=$(sed_escape "$url")
+  esc_jd_file=$(sed_escape "$jd_file")
+  esc_report_num=$(sed_escape "$report_num")
+  esc_date=$(sed_escape "$date")
+  esc_id=$(sed_escape "$id")
   sed \
     -e "s|{{URL}}|${esc_url}|g" \
     -e "s|{{JD_FILE}}|${esc_jd_file}|g" \
@@ -363,7 +404,7 @@ process_offer() {
   # Launch claude -p worker.
   # Model defaults to the Claude Max subscription default unless --model was
   # passed. Building the command in an array keeps quoting safe regardless.
-  local -a claude_args=(-p --dangerously-skip-permissions)
+  local -a claude_args=(-p --allowed-tools "$WORKER_TOOLS")
   if [[ -n "$MODEL" ]]; then
     claude_args+=(--model "$MODEL")
   fi
@@ -392,7 +433,11 @@ process_offer() {
       if (( $(echo "$score < $MIN_SCORE" | bc -l) )); then
         update_state "$id" "$url" "skipped" "$started_at" "$completed_at" "$report_num" "$score" "below-min-score" "$retries"
         echo "    ⏭️  Skipped (score: $score < min-score: $MIN_SCORE)"
-        continue
+        # `return`, not `continue` — this is a function, not a loop. bash
+        # propagates `continue` to the CALLER's loop, and in --parallel mode
+        # the function runs in a background subshell with no enclosing loop
+        # at all, which errors under `set -e`.
+        return 0
       fi
     fi
 

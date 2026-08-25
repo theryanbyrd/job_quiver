@@ -14,11 +14,54 @@
 const ASHBY_TIMEOUT_MS = 30_000;
 const ASHBY_RETRIES = 2;
 
+const ALLOWED_ASHBY_HOSTS = new Set(['api.ashbyhq.com']);
+
+function assertAshbyUrl(url) {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error(`ashby: invalid URL: ${url}`);
+  }
+  if (parsed.protocol !== 'https:') throw new Error(`ashby: URL must use HTTPS: ${url}`);
+  if (!ALLOWED_ASHBY_HOSTS.has(parsed.hostname)) {
+    throw new Error(`ashby: untrusted hostname "${parsed.hostname}" — must be one of: ${[...ALLOWED_ASHBY_HOSTS].join(', ')}`);
+  }
+  return url;
+}
+
+// Validate a posting URL echoed back by the API. These land in pipeline.md
+// and scan-history.tsv, and are later handed to Playwright and to the OS URL
+// opener in the dashboard — so an off-domain or non-https value is dropped
+// rather than propagated. Mirrors the recruitee/smartrecruiters parsers.
+function safePostingUrl(rawUrl) {
+  if (typeof rawUrl !== 'string' || !rawUrl) return '';
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== 'https:') return '';
+    if (parsed.hostname !== 'jobs.ashbyhq.com') return '';
+    return parsed.href;
+  } catch {
+    return '';
+  }
+}
+
 function resolveApiUrl(entry) {
-  const url = entry.careers_url || '';
-  const match = url.match(/jobs\.ashbyhq\.com\/([^/?#]+)/);
-  if (!match) return null;
-  return `https://api.ashbyhq.com/posting-api/job-board/${match[1]}?includeCompensation=true`;
+  const raw = typeof entry.careers_url === 'string' ? entry.careers_url : '';
+  if (!raw) return null;
+  let parsed;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return null;
+  }
+  // Parse the URL rather than regexing the raw string: an unanchored match
+  // also fires on `https://attacker.example/jobs.ashbyhq.com/slug`.
+  if (parsed.protocol !== 'https:') return null;
+  if (parsed.hostname !== 'jobs.ashbyhq.com') return null;
+  const slug = parsed.pathname.split('/').filter(Boolean)[0];
+  if (!slug) return null;
+  return `https://api.ashbyhq.com/posting-api/job-board/${encodeURIComponent(slug)}?includeCompensation=true`;
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -35,6 +78,7 @@ export default {
   async fetch(entry, ctx) {
     const apiUrl = resolveApiUrl(entry);
     if (!apiUrl) throw new Error(`ashby: cannot derive API URL for ${entry.name}`);
+    assertAshbyUrl(apiUrl);
 
     let lastErr;
     for (let attempt = 0; attempt <= ASHBY_RETRIES; attempt++) {
@@ -44,11 +88,13 @@ export default {
         await sleep(backoff);
       }
       try {
-        const json = await ctx.fetchJson(apiUrl, { timeoutMs: ASHBY_TIMEOUT_MS });
+        // redirect:'error' prevents SSRF via server-side redirects; combined with
+        // assertAshbyUrl above it guarantees the final hostname stays in the allowlist.
+        const json = await ctx.fetchJson(apiUrl, { timeoutMs: ASHBY_TIMEOUT_MS, redirect: 'error' });
         const jobs = Array.isArray(json?.jobs) ? json.jobs : [];
         return jobs.map((j) => ({
           title: j.title || '',
-          url: j.jobUrl || '',
+          url: safePostingUrl(j.jobUrl),
           company: entry.name,
           location: j.location || '',
         }));
