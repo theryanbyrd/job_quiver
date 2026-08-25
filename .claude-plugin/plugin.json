@@ -1,6 +1,6 @@
 {
   "name": "career-ops",
-  "version": "1.6.0",
+  "version": "1.8.1",
   "description": "AI job search command center — evaluate offers, generate CVs, scan portals, track applications",
   "author": {
     "name": "santifer",
@@ -9,7 +9,20 @@
   "skills": true,
   "permissions": {
     "allow": [
-      "Bash(node:*)",
+      "Bash(node analyze-patterns.mjs:*)",
+      "Bash(node check-liveness.mjs:*)",
+      "Bash(node cv-sync-check.mjs:*)",
+      "Bash(node dedup-tracker.mjs:*)",
+      "Bash(node doctor.mjs:*)",
+      "Bash(node followup-cadence.mjs:*)",
+      "Bash(node gemini-eval.mjs:*)",
+      "Bash(node generate-latex.mjs:*)",
+      "Bash(node generate-pdf.mjs:*)",
+      "Bash(node merge-tracker.mjs:*)",
+      "Bash(node normalize-statuses.mjs:*)",
+      "Bash(node scan.mjs:*)",
+      "Bash(node update-system.mjs:*)",
+      "Bash(node verify-pipeline.mjs:*)",
       "WebFetch(domain:boards-api.greenhouse.io)",
       "WebFetch(domain:jobs.ashbyhq.com)",
       "WebSearch"

@@ -2,7 +2,6 @@ package screens
 
 import (
 	"fmt"
-	"path/filepath"
 	"sort"
 	"strings"
 
@@ -332,7 +331,12 @@ func (m PipelineModel) handleKey(msg tea.KeyMsg) (PipelineModel, tea.Cmd) {
 
 	case "enter":
 		if app, ok := m.CurrentApp(); ok && app.ReportPath != "" {
-			fullPath := filepath.Join(m.careerOpsPath, app.ReportPath)
+			// Containment check: the report link comes from applications.md,
+			// which is agent-written from untrusted job-posting content.
+			fullPath, pathOK := data.SafeJoin(m.careerOpsPath, app.ReportPath)
+			if !pathOK {
+				break
+			}
 			title := fmt.Sprintf("%s — %s", app.Company, app.Role)
 			jobURL := app.JobURL
 			return m, func() tea.Msg {

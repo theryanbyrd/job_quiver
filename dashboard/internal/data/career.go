@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -25,6 +26,62 @@ var (
 	reReportURL      = regexp.MustCompile(`(?m)^\*\*URL:\*\*\s*(https?://\S+)`)
 	reBatchID        = regexp.MustCompile(`(?m)^\*\*Batch ID:\*\*\s*(\d+)`)
 )
+
+// SafeExternalURL validates a URL before it is handed to the OS URL opener
+// (`open` / `xdg-open` / `cmd /c start`). Those launchers act on whatever they
+// are given: a non-http scheme can invoke a registered protocol handler, and a
+// value beginning with "-" can be parsed as a flag rather than a URL.
+//
+// Job URLs reach here from scan-history.tsv and batch-input.tsv, both of which
+// carry data derived from third-party ATS feeds, so "starts with http" (the
+// only check the loaders did) is not enough — it also accepts "httpfoo://".
+// Require a parseable absolute URL with an exact http/https scheme and a host.
+func SafeExternalURL(raw string) (string, bool) {
+	if raw == "" || strings.HasPrefix(raw, "-") {
+		return "", false
+	}
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "", false
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return "", false
+	}
+	if u.Host == "" {
+		return "", false
+	}
+	return u.String(), true
+}
+
+// SafeJoin joins a base directory with a relative path from untrusted data and
+// verifies the result stays inside the base.
+//
+// Report paths come from `[N](path)` markdown links in applications.md, which
+// is written by the agent from evaluations of job postings fetched off the
+// open web. filepath.Join cleans ".." lexically rather than rejecting it, so
+// `[1](../../../../etc/passwd)` would otherwise escape the career-ops
+// directory and be read (and rendered in the viewer).
+//
+// Returns ok=false for absolute paths, paths that traverse outside base, and
+// anything that cannot be resolved.
+func SafeJoin(base, rel string) (string, bool) {
+	if rel == "" || filepath.IsAbs(rel) {
+		return "", false
+	}
+	absBase, err := filepath.Abs(base)
+	if err != nil {
+		return "", false
+	}
+	candidate := filepath.Join(absBase, rel)
+	relPath, err := filepath.Rel(absBase, candidate)
+	if err != nil {
+		return "", false
+	}
+	if relPath == ".." || strings.HasPrefix(relPath, ".."+string(filepath.Separator)) {
+		return "", false
+	}
+	return candidate, true
+}
 
 // ParseApplications reads applications.md and returns parsed applications.
 // It tries both {path}/applications.md and {path}/data/applications.md for compatibility.
@@ -123,7 +180,11 @@ func ParseApplications(careerOpsPath string) []model.CareerApplication {
 		if apps[i].ReportPath == "" {
 			continue
 		}
-		fullReport := filepath.Join(careerOpsPath, apps[i].ReportPath)
+		fullReport, ok := SafeJoin(careerOpsPath, apps[i].ReportPath)
+		if !ok {
+			// Report link escapes the career-ops directory — skip it.
+			continue
+		}
 		reportContent, err := os.ReadFile(fullReport)
 		if err != nil {
 			continue
@@ -136,8 +197,10 @@ func ParseApplications(careerOpsPath string) []model.CareerApplication {
 
 		// Strategy 1: **URL:** in report
 		if m := reReportURL.FindStringSubmatch(header); m != nil {
-			apps[i].JobURL = m[1]
-			continue
+			if safe, ok := SafeExternalURL(m[1]); ok {
+				apps[i].JobURL = safe
+				continue
+			}
 		}
 
 		// Strategy 2: **Batch ID:** -> batch-input.tsv
@@ -184,14 +247,14 @@ func loadBatchInputURLs(careerOpsPath string) map[string]string {
 		// Extract real job URL from notes: "Title @ Company | Match% | https://actual-url"
 		if idx := strings.LastIndex(notes, "| "); idx >= 0 {
 			u := strings.TrimSpace(notes[idx+2:])
-			if strings.HasPrefix(u, "http") {
-				result[id] = u
+			if safe, ok := SafeExternalURL(u); ok {
+				result[id] = safe
 				continue
 			}
 		}
 		// Fallback: use JackJill URL
-		if strings.HasPrefix(fields[1], "http") {
-			result[id] = fields[1]
+		if safe, ok := SafeExternalURL(fields[1]); ok {
+			result[id] = safe
 		}
 	}
 	return result
@@ -229,13 +292,15 @@ func loadJobURLs(careerOpsPath string) map[string]string {
 		// Extract URL from notes: "Title @ Company | Match% | https://actual-url"
 		if idx := strings.LastIndex(notes, "| "); idx >= 0 {
 			u := strings.TrimSpace(notes[idx+2:])
-			if strings.HasPrefix(u, "http") {
-				e.url = u
+			if safe, ok := SafeExternalURL(u); ok {
+				e.url = safe
 			}
 		}
 		// Fallback: use JackJill URL from field 1
-		if e.url == "" && strings.HasPrefix(fields[1], "http") {
-			e.url = fields[1]
+		if e.url == "" {
+			if safe, ok := SafeExternalURL(fields[1]); ok {
+				e.url = safe
+			}
 		}
 
 		// Extract company and role: "Role @ Company | Match% | URL"
@@ -304,10 +369,10 @@ func enrichFromScanHistory(careerOpsPath string, apps []model.CareerApplication)
 		if len(fields) < 5 || fields[0] == "url" {
 			continue
 		}
-		url := fields[0]
 		company := fields[4]
 		title := fields[3]
-		if url == "" || !strings.HasPrefix(url, "http") {
+		url, ok := SafeExternalURL(fields[0])
+		if !ok {
 			continue
 		}
 		key := normalizeCompany(company)
@@ -505,7 +570,10 @@ func NormalizeStatus(raw string) string {
 
 // LoadReportSummary extracts key fields from a report file.
 func LoadReportSummary(careerOpsPath, reportPath string) (archetype, tldr, remote, comp string) {
-	fullPath := filepath.Join(careerOpsPath, reportPath)
+	fullPath, ok := SafeJoin(careerOpsPath, reportPath)
+	if !ok {
+		return
+	}
 	content, err := os.ReadFile(fullPath)
 	if err != nil {
 		return

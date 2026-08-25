@@ -27,6 +27,13 @@ const CANONICAL_REPO = 'https://github.com/santifer/career-ops.git';
 const RAW_VERSION_URL = 'https://raw.githubusercontent.com/santifer/career-ops/main/VERSION';
 const RELEASES_API = 'https://api.github.com/repos/santifer/career-ops/releases/latest';
 
+// Tag names we are willing to hand to `git fetch`. Deliberately strict: the
+// value comes from a network response, and git treats leading-dash arguments
+// as options, so an unconstrained tag name is an argument-injection vector.
+// Covers both historical (`v1.6.0`) and release-please (`career-ops-v1.9.0`)
+// formats.
+const SAFE_TAG_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/;
+
 // System layer paths — ONLY these files get updated
 const SYSTEM_PATHS = [
   'modes/_shared.md',
@@ -165,6 +172,7 @@ async function check() {
   const local = localVersion();
   let remote = '';
   let releaseVersion = '';
+  let releaseTag = '';
   let changelog = '';
 
   // Fetch both sources in parallel — only fail offline if BOTH are unreachable.
@@ -204,8 +212,13 @@ async function check() {
       const release = await releaseResult.value.json();
       changelog = release.body || '';
       const rawTag = String(release.tag_name || '').trim();
-      const match = rawTag.match(SEMVER_RE);
-      releaseVersion = match ? match[1] : '';
+      // Accept the tag if it *ends* in a semver (covers `v1.9.0` and
+      // release-please's `career-ops-v1.9.0`) and is shell/git-safe.
+      const match = rawTag.match(/v?(\d+\.\d+\.\d+)$/i);
+      if (match && SAFE_TAG_RE.test(rawTag)) {
+        releaseVersion = match[1];
+        releaseTag = rawTag;
+      }
     } catch {
       // Body parse failed; treat as no release source
     }
@@ -241,11 +254,57 @@ async function check() {
     status: 'update-available',
     local,
     remote,
+    tag: releaseTag,
     changelog: changelog.slice(0, 500),
   }));
 }
 
 // ── APPLY ───────────────────────────────────────────────────────
+
+// Resolve the tag of the latest published release. apply() checks out from
+// this tag rather than from `main`.
+//
+// Why: `git fetch <repo> main` + `git checkout FETCH_HEAD` applies whatever
+// is on the branch tip at that instant — including commits that were never
+// released and that the user never saw. check() shows the user a changelog
+// taken from the *releases* API, so applying `main` meant the approved
+// description and the applied code were two different things.
+//
+// Tags here are lightweight (unannotated) upstream, so `git verify-tag` is
+// not possible. Pinning to the release tag is the available improvement; if
+// upstream starts signing tags, add verification here.
+async function resolveReleaseTag() {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  let res;
+  try {
+    res = await fetch(RELEASES_API, {
+      headers: {
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'career-ops-update-checker',
+      },
+      signal: controller.signal,
+    });
+  } catch (err) {
+    throw new Error(`Could not reach the GitHub releases API to resolve a release tag: ${err.message}`);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  if (!res.ok) {
+    throw new Error(`GitHub releases API returned HTTP ${res.status}; cannot resolve a release tag.`);
+  }
+
+  const release = await res.json();
+  const tag = String(release.tag_name || '').trim();
+  if (!tag) {
+    throw new Error('Latest release has no tag_name; refusing to update.');
+  }
+  if (!SAFE_TAG_RE.test(tag)) {
+    throw new Error(`Refusing to fetch unsafe tag name: ${JSON.stringify(tag)}`);
+  }
+  return tag;
+}
 
 async function apply() {
   const local = localVersion();
@@ -271,9 +330,12 @@ async function apply() {
       console.log(`Backup branch already exists (${backupBranch}), continuing...`);
     }
 
-    // 2. Fetch from canonical repo
-    console.log('Fetching latest from upstream...');
-    git('fetch', CANONICAL_REPO, 'main');
+    // 2. Fetch the pinned release tag from the canonical repo.
+    //    Fail closed: if no release tag can be resolved we abort rather than
+    //    silently falling back to the `main` branch tip.
+    const releaseTag = await resolveReleaseTag();
+    console.log(`Fetching release ${releaseTag} from upstream...`);
+    git('fetch', '--no-tags', CANONICAL_REPO, `refs/tags/${releaseTag}`);
 
     // 3. Checkout system files only
     console.log('Updating system files...');
@@ -369,12 +431,23 @@ async function apply() {
       throw violation;
     }
 
-    // 5. Install any new dependencies
+    // 5. Install any new dependencies.
+    //    --ignore-scripts: an update pulls a new package.json from the
+    //    network, so running arbitrary pre/post-install scripts from it
+    //    would hand any compromised (or merely careless) dependency code
+    //    execution during what the user approved as a "doc and script
+    //    refresh". Prefer `npm ci` when a lockfile is present so the
+    //    resolved tree is the one that was reviewed and committed.
+    const npmCmd = existsSync(join(ROOT, 'package-lock.json'))
+      ? 'npm ci --silent --ignore-scripts'
+      : 'npm install --silent --ignore-scripts';
     try {
-      execSync('npm install --silent', { cwd: ROOT, timeout: 60000 });
+      execSync(npmCmd, { cwd: ROOT, timeout: 120000 });
     } catch {
       console.log('npm install skipped (may need manual run)');
     }
+    console.log('Note: dependency install scripts were skipped (--ignore-scripts).');
+    console.log('If a dependency needs a postinstall step, run it explicitly.');
 
     // 6. Commit the update
     const remote = localVersion(); // Re-read after checkout updated VERSION

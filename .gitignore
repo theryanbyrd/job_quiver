@@ -47,4 +47,8 @@ bun.lock
 .claude/settings.local.json
 .claude/memory/
 career-dashboard
-package-lock.json
+
+# package-lock.json is intentionally COMMITTED (was previously ignored).
+# Without it: `npm audit` cannot run at all (ENOLOCK), every install
+# re-resolves the floating ^ ranges to whatever is newest, and
+# dependency-review has no baseline to diff a PR against.
